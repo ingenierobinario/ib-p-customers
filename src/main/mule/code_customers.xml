@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce-system-api="http://www.mulesoft.org/schema/mule/salesforce-system-api"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce-system-api http://www.mulesoft.org/schema/mule/salesforce-system-api/current/mule-salesforce-system-api.xsd"><flow name="get:\customers\(id):ib-p-customers-config">
+		<ee:transform doc:name="varInitialData" doc:id="92a2e08c-876b-4a57-bbff-2a811bae63bf" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="varInitialData" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	correlationId: attributes.headers.'x-correlation-id',
+	customerId: attributes.uriParams.id,
+	origin: attributes.headers.'x-source-system'
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="START get customers by id" doc:id="9b8e8fa6-3725-4197-8556-c1b7f9a56dca" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	&#10;	message: "starting get customers by id to salesforce",&#10;	content: vars.varInitialData&#10;}]' />
+		<salesforce-system-api:retrieve-customer-by-id doc:name="Retrieve customer by ID" doc:id="094d9c84-d2c7-49ff-a58d-78d29287eba3" config-ref="Salesforce_System_API_Config" id="#[vars.varInitialData.customerId]" x-correlation-id="#[vars.varInitialData.correlationId]" x-source-system="#[vars.varInitialData.origin]"/>
+		<logger level="INFO" doc:name="END get customers by id" doc:id="662a33ce-c982-456b-936f-9571f789006d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	&#10;	message: "get customers by id successfully to salesforce",&#10;	content: vars.varInitialData,&#10;	results: payload&#10;	&#10;}]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="86124e6a-a8ef-49fe-9e31-ba045d305e60" >
+				<logger level="ERROR" doc:name="error trying to get customer from salesforce" doc:id="eeb3c1f7-ceab-4a18-8b53-8ea041c113e9" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	content: vars.varInitialData,&#10;	error: error&#10;}]" />
+			</on-error-propagate>
+		</error-handler>
+    
+</flow>
+    <flow name="post:\customers:application\json:ib-p-customers-config">
+        <ee:transform doc:name="varInitialData" doc:id="7fbf335a-36b8-4791-9507-7bb3d4aeb98c">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="varInitialData"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	correlationId: attributes.headers.'x-correlation-id',
+	origin: attributes.headers.'x-source-system',
+	idempotencykey: attributes.headers."x-idempotency-key",
+	content: payload
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="START post customers" doc:id="7b83d017-2d59-49fe-83b4-5f63e4798323" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	&#10;	message: "starting post customers to salesforce",&#10;	content: vars.varInitialData&#10;}]' />
+		<ee:transform doc:name="canonical data model" doc:id="8ae6e398-6242-4082-b752-352f52b06714" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	FirstName: payload.name,
+	LastName: payload.surname,
+	Email: payload.email,
+	Phone: payload.phone default "",
+	MailingStreet: payload.address.street,
+	MailingCity: payload.address.city,
+	MailingCountry: payload.address.country
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce-system-api:add-customer doc:name="Add customer" doc:id="f1635ca1-b9e4-4c78-aa7c-a3704adf209f" config-ref="Salesforce_System_API_Config" x-correlation-id="#[vars.varInitialData.correlationId]" x-source-system="#[vars.varInitialData.origin]" x-idempotency-key="#[vars.varInitialData.idempotencykey]"/>
+		<logger level="INFO" doc:name="END post customers" doc:id="79a721f5-cd66-4c16-9dc5-75a88c4dda18" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	&#10;	message: "customer posted successfully to salesforce",&#10;	content: vars.varInitialData&#10;}]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="50f8794c-47bb-405e-99e3-4242e1e3270e" >
+				<logger level="ERROR" doc:name="error trying to post customer into salesforce" doc:id="8b6357bc-ec32-4a2d-aec0-b4cda52a8a10" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	content: vars.varInitialData,&#10;	error: error&#10;}]" />
+			</on-error-propagate>
+		</error-handler>
+    
+</flow></mule>

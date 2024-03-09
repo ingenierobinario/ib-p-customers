@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="customer" format="json">
+      <types:shape format="weave" example="examples/customer_salesforce.json"><![CDATA[%dw 2.0
+
+type customer = {|
+  FirstName: String, 
+  LastName: String, 
+  Email: String, 
+  Phone: String, 
+  MailingStreet: String, 
+  MailingCity: String, 
+  MailingCountry: String
+|} {"example": "{\\\"FirstName\\\":\\\"Juan\\\",\\\"LastName\\\":\\\"P\u00E9rez\\\",\\\"Email\\\":\\\"juan.perez@gmail.com\\\",\\\"Phone\\\":\\\"+34 1234567890\\\",\\\"MailingStreet\\\":\\\"Calle Falsa 123\\\",\\\"MailingCity\\\":\\\"Ciudad Ejemplo\\\",\\\"MailingCountry\\\":\\\"Pa\u00EDs Ejemplo\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#8ae6e398-6242-4082-b752-352f52b06714">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="customer"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

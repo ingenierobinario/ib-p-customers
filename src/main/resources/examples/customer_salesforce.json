@@ -1,0 +1,9 @@
+{
+  "FirstName": "Juan",
+  "LastName": "Pérez",
+  "Email": "juan.perez@gmail.com",
+  "Phone": "+34 1234567890",
+  "MailingStreet": "Calle Falsa 123",
+  "MailingCity": "Ciudad Ejemplo",
+  "MailingCountry": "País Ejemplo"
+}
